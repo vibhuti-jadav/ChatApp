@@ -29,9 +29,7 @@ document.querySelector("#location").addEventListener("click",()=>{
 
     navigator.geolocation.getCurrentPosition((position)=>{
         const lat = position.coords.latitude;
-
         const lon = position.coords.longitude;
-
         socket.emit("location",lat,lon)
     })
 })
