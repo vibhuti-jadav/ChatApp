@@ -25,13 +25,18 @@ io.on("connection", (socket) => {
 
   socket.emit("message", "welcome");
 
-socket.on("sendMessage",(msg)=>{
+socket.on("sendMessage",(msg,callback)=>{
   console.log(msg)
+  io.emit("message",msg)
+  callback("message a received")
 })
 
-socket.on("location",(lat,lon)=>{
+socket.on("location",(lat,lon,callback)=>{
   socket.emit("message", `https://google.com/maps?q=${lat},${lon}`);
+  callback("location received")
 });
+
+
 
 });
 

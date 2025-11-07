@@ -1,18 +1,23 @@
 const socket = io()
 
-socket.on("message",(msg)=>{
-    console.log(msg)
+// socket.on("message",(msg)=>{
+//     console.log(msg)
+// })
+
+
+const messageTemplate = document.querySelector("#msg-template").innerHTML;
+
+const messages = document.querySelector("#messages")
+
+socket.on("message",(message)=>{
+    const html = Mustache.render(messageTemplate, {message})
+
+    messages.insertAdjacentHTML("beforeend",html)
 })
-
-
-// const messageTemplate = document.querySelector("#msg-template").innerHTML;
-
-// const message = document.querySelector("#message")
 
 socket.on("newConnection",(msg)=>{
     console.log(msg)
 })
-
 
 
 const $messageForm = document.querySelector("#msg-form");
@@ -28,7 +33,13 @@ $messageForm.addEventListener("submit",(e)=>{
 
     let message = e.target.elements.message.value;
 
-    socket.emit("sendMessage",message)
+    socket.emit("sendMessage",message,(ack,error)=>{
+        if(error){
+            return console.log(error.message);
+        }
+
+        console.log(ack)
+    })
 
     $messageButton.removeAttribute("disabled");
 
@@ -63,7 +74,14 @@ $locationButton.addEventListener("click",()=>{
 
         const lon = position.coords.longitude
 
-        socket.emit("location",lat,lon)
+        // socket.emit("location",lat,lon)
+        socket.emit("location",lat,lon,(ack,error)=>{
+            if(error){
+                return console.log(error.message)
+            }
+
+            console.log(ack)
+        })
 
       $locationButton.removeAttribute("disabled")
     })
