@@ -20,6 +20,18 @@ const io = new Server(server);
 io.on("connection", (socket) => {
   console.log("new websocket connection established");
 
+  socket.on("join",({username,room})=>{
+    socket.join(room)
+
+    io.to(room).emit(
+      "newConnection",
+      generateMessage((`${username} has joined`))
+    );
+
+    socket.to(room).emit("message",generateMessage(`welcome ${username}`))
+
+  })
+
   // io.emit("newConnection","a new user joined")
 
   io.emit("newConnection",generateMessage("a new user joined"))
@@ -28,7 +40,7 @@ io.on("connection", (socket) => {
 
   // socket.emit("message", "welcome");
 
-  socket.emit("message",generateMessage("welcome"))
+  // socket.emit("message",generateMessage("welcome"))
 
 socket.on("sendMessage",(msg,callback)=>{
   console.log(msg)
@@ -46,7 +58,9 @@ socket.on("location",(lat,lon,callback)=>{
   callback("location received")
 });
 
-
+socket.on("disconnect",()=>{
+  socket.broadcast.emit("message","a user left")
+});
 
 });
 

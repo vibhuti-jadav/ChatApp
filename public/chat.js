@@ -1,5 +1,12 @@
 const socket = io()
 
+const {username,room} = Qs.parse(location.search,{
+    ignoreQueryPrefix:true,
+});
+
+socket.emit("join",{username,room})
+console.log("room",username,room)
+
 // socket.on("message",(msg)=>{
 //     console.log(msg)
 // })
