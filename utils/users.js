@@ -3,10 +3,12 @@ const users = []
 const addUser = ({id,username,room}) => {
     username = username.trim().toLowerCase();
 
-    room = username.trim().toLowerCase();
+    room = room.trim().toLowerCase();
 
     if(!username || !room){
-        return alert("username  and room data is required")
+        return {
+            error:"username  and room data is required"
+        }
     }
 
     const existingUser = users.find(
@@ -14,14 +16,16 @@ const addUser = ({id,username,room}) => {
     )
 
     if(existingUser){
-        return alert("user already exist with this id")
+        return {
+            error:"user already exist with this id"
+        }
     }
 
     const user = {id,username,room};
 
     users.push(user);
 
-    return {users};
+    return {user};
 };
 
 
@@ -38,3 +42,12 @@ const removeUser = (id)=>{
         return users.splice(index,1)[0]
     }
 }
+
+
+const getUserInChatRoom = (room)=>{
+    const  userList = users.filter((user)=>user.room === room);
+    return userList
+}
+
+
+export {addUser,getUser,removeUser,getUserInChatRoom}

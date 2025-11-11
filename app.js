@@ -4,6 +4,7 @@ import { dirname, join } from "path";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { generateMessage , locationMessage } from "./utils/messages.js";
+import { getUser , addUser,removeUser,getUserInChatRoom } from "./utils/users.js";
 
 const app = express();
 
@@ -20,21 +21,31 @@ const io = new Server(server);
 io.on("connection", (socket) => {
   console.log("new websocket connection established");
 
-  socket.on("join",({username,room})=>{
-    socket.join(room)
+  socket.on("join",({username,room},callback)=>{
 
-    io.to(room).emit(
-      "newConnection",
-      generateMessage((`${username} has joined`))
-    );
+    const {error,user}=addUser({id:socket.id,username,room})
 
-    socket.to(room).emit("message",generateMessage(`welcome ${username}`))
+    if(error){
+      return callback(error)
+    }
+
+    if(user){
+      socket.join(user.room)
+    }
+
+    
+
+    socket.broadcast
+    .to(user.room)
+    .emit("newConnection",generateMessage(`${user.username} has joined`));
+
+    socket.to(user.room).emit("message",generateMessage(`welcome ${user.username}`))
 
   })
 
   // io.emit("newConnection","a new user joined")
 
-  io.emit("newConnection",generateMessage("a new user joined"))
+  // io.emit("newConnection",generateMessage("a new user joined"))
 
   // io.emit("message","welcome")
 
@@ -43,23 +54,41 @@ io.on("connection", (socket) => {
   // socket.emit("message",generateMessage("welcome"))
 
 socket.on("sendMessage",(msg,callback)=>{
-  console.log(msg)
-  // io.emit("message",msg)
-  io.emit("message",generateMessage(msg))
-  callback("message a received")
+
+  const user = getUser(socket.id)
+
+  if(user){
+    io.to(user.room).emit("message",generateMessage(msg))
+ callback("message a received") 
+ }
+
 })
 
 socket.on("location",(lat,lon,callback)=>{
-  // socket.emit("message", `https://google.com/maps?q=${lat},${lon}`);
-  socket.emit(
-    "location",
-    locationMessage(`https://google.com/maps?q=${lat},${lon}`)
-  )
-  callback("location received")
+  
+  const user = getUser(socket.id)
+
+  if(user){
+    socket
+    .to(user.room)
+    .emit(
+      "location", 
+      locationMessage(`https://google.com/maps?q=${lat},${lon}`)
+    )
+    callback("location received")
+  }
+
 });
 
 socket.on("disconnect",()=>{
-  socket.broadcast.emit("message","a user left")
+
+  const user = getUser(socket.id);
+
+  if(user){
+    socket.broadcast.to(user.room).emit("message",`${user.username} has left`);
+  }
+
+  removeUser(socket.id)
 });
 
 });
