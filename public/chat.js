@@ -4,6 +4,31 @@ const {username,room} = Qs.parse(location.search,{
     ignoreQueryPrefix:true,
 });
 
+const autoScroll = () => {
+  // Ensure there are messages
+  const $newMessage = $messages.lastElementChild;
+  if (!$newMessage) return;
+
+  // Get height of the new message
+  const newMessageStyle = getComputedStyle($newMessage);
+  const newMessageMargin = parseInt(newMessageStyle.marginBottom);
+  const newMessageHeight = $newMessage.offsetHeight + newMessageMargin;
+
+  // Visible height
+  const visibleHeight = $messages.offsetHeight;
+
+  // Height of message container
+  const containerHeight = $messages.scrollHeight;
+
+  // How far have I scrolled?
+  const scrollOffset = $messages.scrollTop + visibleHeight;
+
+  // Auto-scroll if we're at the bottom
+  if (containerHeight - newMessageHeight <= scrollOffset + 1) {
+    $messages.scrollTop = $messages.scrollHeight;
+  }
+};
+
 socket.emit("join",{username,room},(err)=>{
     if(err){
         alert(err);
@@ -14,10 +39,6 @@ socket.emit("join",{username,room},(err)=>{
 
 console.log("room",username,room)
 
-// socket.on("message",(msg)=>{
-//     console.log(msg)
-// })
-
 
 const messageTemplate = document.querySelector("#msg-template").innerHTML;
 
@@ -25,15 +46,13 @@ const messages = document.querySelector("#messages")
 
 socket.on("message",(message)=>{
     const html = Mustache.render(messageTemplate,{
+        username:message.username,
         message:message.text,
         createdAt:moment(message.createdAt).format("h:mm:a")
     })
 
     messages.insertAdjacentHTML("beforeend",html)
-})
-
-socket.on("newConnection",(msg)=>{
-    console.log(msg)
+    autoScroll()
 })
 
 
@@ -43,11 +62,13 @@ const locationMessage = document.querySelector("#location-msg")
 
 socket.on("location",(url)=>{
     const html = Mustache.render(locationTemplate,{
+        username:url.username,
         url:url.url,
         createdAt:moment(url.createdAt).format("h:mm:a")
     })
 
     locationMessage.insertAdjacentHTML("beforeend",html)
+    autoScroll()
 })
 
 
@@ -130,3 +151,12 @@ $locationButton.addEventListener("click",()=>{
 //         socket.emit("location",lat,lon)
 //     })
 // })
+
+
+const $sidebarTemplate = document.querySelector("#sidebar-template").innerHTML;
+
+socket.on("roomData",({room,users})=>{
+    const html = Mustache.render($sidebarTemplate,{room,users});
+
+    document.querySelector("#sidebar").innerHTML = html
+})
